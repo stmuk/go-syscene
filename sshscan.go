@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 )
 
 func main() {
@@ -33,7 +34,12 @@ func localAddresses() {
 		}
 
 		for _, a := range addrs {
-			log.Printf("Scanning %+v\n", a)
+
+			if strings.Contains(a.String(), "::") {
+				continue
+			}
+
+			//log.Printf("Scanning %+v\n", a)
 
 			hosts, _ := Hosts(a.String())
 
@@ -41,18 +47,18 @@ func localAddresses() {
 
 				ip += ":22"
 
-				conn, err := net.Dial("tcp", ip)
-				if err != nil {
-					log.Print(fmt.Errorf("%v", err.Error()))
-					continue
-				}
+				go func(ip string) {
+					conn, err := net.Dial("tcp", ip)
+					if err != nil {
+						//log.Print(fmt.Errorf("%v", err.Error()))
+						return
+					}
 
-				log.Printf("%v ", ip)
+					res, _ := bufio.NewReader(conn).ReadString('\n')
 
-				res, _ := bufio.NewReader(conn).ReadString('\n')
+					fmt.Print(ip + " " + res)
 
-				fmt.Print(res)
-
+				}(ip)
 			}
 		}
 	}
